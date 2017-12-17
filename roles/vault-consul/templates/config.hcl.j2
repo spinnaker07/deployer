@@ -1,0 +1,13 @@
+backend "consul" {
+  address = "127.0.0.1:{{consul_port}}"
+  path = "vault"
+}
+
+listener "tcp" {
+ address = "0.0.0.0:{{vault_port}}"
+ tls_disable = 1
+}
+
+max_lease_ttl = "{{vault_ttl}}"
+
+disable_mlock = true

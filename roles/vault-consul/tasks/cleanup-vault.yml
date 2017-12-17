@@ -1,0 +1,54 @@
+---
+- name: "kill vault PID"
+  shell: kill -9 {{VPID.stdout}}
+
+- name: "stop vault"
+  systemd: state=stopped enabled=no name=vault.service
+
+- name: "remove vault conf directory"
+  file:
+    path: "{{vault_server_config_path}}"
+    state: absent
+    owner: "{{vault_user}}"
+    group: "{{vault_user}}"
+    force: true
+
+- name: Create vault user
+  user:
+    name: "{{vault_user}}"
+    password: "{{vault_user_password}}"
+
+- name: "remove vault directory"
+  file:
+    path: "{{vault_dir}}"
+    state: absent
+    owner: "{{vault_user}}"
+    group: "{{vault_user}}"
+
+- name: Make vault_user vault directory owner
+  file:
+    path: "{{vault_dir}}"
+    state: directory
+    owner: "{{vault_user}}"
+    group: "{{vault_user}}"
+    recurse: yes
+
+- name: "remove vault symlink"
+  file:
+    path: /usr/bin/vault
+    state: absent
+
+- name: "remove vault log directory"
+  file:
+    path: "{{vault_server_log_dir}}"
+    state: absent
+    owner: "{{vault_user}}"
+    group: "{{vault_user}}"
+  when: vault_server
+  register: vault_log_task
+
+- name: "removing vault systemd service"
+  file:
+    path: "{{ item }}"
+  with_items:
+     - "/lib/systemd/system/vault.service"

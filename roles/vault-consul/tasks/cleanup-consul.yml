@@ -1,0 +1,24 @@
+---
+- name: "kill consul PID"
+  shell: kill -9 {{CPID.stdout}}
+
+- name: "stop consul"
+  systemd: state=stopped enabled=no name=consul.service
+
+- name: "remove config dir"
+  file:
+    state: absent
+    path: "/etc/consul.d"
+    owner: "root"
+    group: "root"
+
+- name: "remove data dir"
+  file:
+    state: absent
+    path: "{{ data_dir }}"
+
+- name: "Setting systemd service"
+  file:
+    path: "{{ item }}"
+  with_items:
+     - "/etc/systemd/system/consul.service"

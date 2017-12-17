@@ -1,0 +1,23 @@
+[Unit]
+Description=Consul agent
+Requires=network-online.target
+After=network.target
+
+[Service]
+User={{ consul_user }}
+Group={{ consul_group }}
+PIDFile=/run/consul/consul.pid
+#Restart=on-failure
+Environment=GOMAXPROCS=2
+{% if is_server %}
+ExecStart={{ executable_location }} agent -server -config-dir=/etc/consul.d
+{% else %}
+ExecStart={{ executable_location }} agent $OPTIONS -config-dir=/etc/consul.d
+{% endif %}
+ExecReload=/bin/kill -HUP $MAINPID
+
+KillSignal=SIGTERM
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

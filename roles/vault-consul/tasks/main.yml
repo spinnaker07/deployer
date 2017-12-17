@@ -1,0 +1,50 @@
+---
+- name: Check if consul is already running
+  shell: ps -eaf | grep consul | grep -v grep | awk '{print $2}'
+  register: CPID
+  tags: status
+
+- name: Check if vault is already running
+  shell: ps -eaf | grep vault | grep -v grep | grep -v  vault_deploy.sh | awk '{print $2}'
+  register: VPID
+  tags: status
+
+- name: consul 
+  debug: msg="cpid {{CPID.stdout}}"
+  tags: status
+
+- name: vault
+  debug: msg="vpid {{VPID.stdout}}"
+  tags: status
+
+- name:  Fail if Vault is already running
+  fail:
+    msg: "Vault is already running with pid: {{VPID.stdout}}, if you wanna continue set -e force_install from the command line"
+  when: "VPID.stdout|length > 0 and not force_install"
+  tags: status
+
+- include: cleanup-vault.yml
+  when: "VPID.stdout|length > 0 and force_install"
+
+- name:  Fail if Consul is already running
+  fail:
+    msg: "Consul is already running with pid: {{CPID.stdout}}, if you wanna continue set -e force_install from the command line"
+  when: "CPID.stdout|length > 0 and not force_install"
+  tags: status
+
+- include: cleanup-consul.yml
+  when: "CPID.stdout|length > 0 and force_install"
+
+- name: "Installing required dependencies"
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - zip
+    - curl
+    - wget
+    - unzip
+
+- include: consul.yml
+- include: vault.yml
+- include: service.yml
